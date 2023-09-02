@@ -1,0 +1,29 @@
+/* Add CSS styles as needed */
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  
+  .puzzle-container {
+    width: 400px;
+    height: 400px;
+    border: 2px solid #000;
+  }
+  
+  .reset-button-container {
+    margin-top: 20px;
+    text-align: center;
+  }
+  /* Your existing CSS styles here */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally */
+    justify-content: center; /* Center items vertically */
+    height: 100vh; /* Full viewport height */
+}
