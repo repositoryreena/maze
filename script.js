@@ -11,6 +11,7 @@ let playerCol = 0;
 const obstacles = [];
 
 let hasWon = false;
+let completedMazes = 0; // Initialize completed mazes count
 
 function generateMaze(size, numObstacles) {
   const maze = [];
@@ -54,7 +55,6 @@ function generateMaze(size, numObstacles) {
   return maze;
 }
 
-
 let maze = generateMaze(mazeSize, numObstacles);
 
 function updateObstacles() {
@@ -78,7 +78,6 @@ function updateObstacles() {
     obstacle.col = newCol;
   });
 }
-
 
 function checkCollision() {
   obstacles.forEach((obstacle) => {
@@ -155,7 +154,7 @@ function movePlayer(direction) {
         alert('You won! You reached the green square.');
         hasWon = true;
         numObstacles++; // Add an additional obstacle when you win
-        setTimeout(resetGame, 1000);
+        resetGame();
       }
 
       checkCollision();
@@ -170,6 +169,13 @@ function resetGame() {
   playerCol = 0;
   hasWon = false;
   obstacles.length = 0; // Clear the list of obstacles
+
+  // Increment the completed mazes count when you win
+  completedMazes++;
+
+  // Update the displayed score
+  const scoreDisplay = document.getElementById('score-display');
+  scoreDisplay.textContent = `Completed Mazes: ${completedMazes}`;
 
   maze = generateMaze(mazeSize, numObstacles);
   drawMaze();
