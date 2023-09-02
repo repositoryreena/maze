@@ -1,26 +1,20 @@
 const canvas = document.getElementById('maze-canvas');
 const context = canvas.getContext('2d');
 
-let cellSize = 40; // Size of each cell
-let mazeSize = 8; // Initial maze size
+let cellSize = 40;
+let mazeSize = 8;
+let numObstacles = 0;
 
-let playerRow = 1; // Initial player row position
-let playerCol = 0; // Initial player column position
+let playerRow = 1;
+let playerCol = 0;
 
-// Define multiple moving obstacles
-const obstacles = [
-  { row: 3, col: 4 },
-  { row: 6, col: 2 },
-  { row: 4, col: 7 },
-];
+const obstacles = [];
 
 let hasWon = false;
 
-// Function to generate a simple maze
-function generateMaze(size) {
+function generateMaze(size, numObstacles) {
   const maze = [];
 
-  // Initialize the maze with walls (1)
   for (let row = 0; row < size; row++) {
     maze[row] = [];
     for (let col = 0; col < size; col++) {
@@ -28,24 +22,41 @@ function generateMaze(size) {
     }
   }
 
-  // Clear a path for the ball to move
   for (let row = 1; row < size - 1; row++) {
     for (let col = 1; col < size - 1; col++) {
       maze[row][col] = 0;
     }
   }
 
-  // Set the entrance and exit
-  maze[1][0] = 0; // Entrance
-  maze[size - 2][size - 1] = 2; // Exit (green square)
+  maze[1][0] = 0;
+  maze[size - 2][size - 1] = 2;
+
+  // Avoid top-left and bottom-right corners for obstacles
+  const cornerExclusions = [
+    [1, 1],                      // Top-left corner
+    [size - 2, size - 2],        // Bottom-right corner
+  ];
+
+  for (let i = 0; i < numObstacles; i++) {
+    let obstacleRow, obstacleCol;
+    do {
+      obstacleRow = Math.floor(Math.random() * (size - 2)) + 1;
+      obstacleCol = Math.floor(Math.random() * (size - 2)) + 1;
+    } while (
+      maze[obstacleRow][obstacleCol] === 1 ||
+      (obstacleRow === 1 && obstacleCol === 0) ||
+      cornerExclusions.some(([row, col]) => obstacleRow === row && obstacleCol === col)
+    );
+    maze[obstacleRow][obstacleCol] = 1;
+    obstacles.push({ row: obstacleRow, col: obstacleCol }); // Add obstacle to the list
+  }
 
   return maze;
 }
 
-// Generate the initial maze
-let maze = generateMaze(mazeSize);
 
-// Function to update obstacle positions (move randomly)
+let maze = generateMaze(mazeSize, numObstacles);
+
 function updateObstacles() {
   obstacles.forEach((obstacle) => {
     let newRow, newCol;
@@ -59,7 +70,8 @@ function updateObstacles() {
       newRow >= mazeSize ||
       newCol < 0 ||
       newCol >= mazeSize ||
-      maze[newRow][newCol] === 1
+      maze[newRow][newCol] === 1 ||
+      (newRow === 1 && newCol === 0) // Prevent obstacles from moving towards the entrance
     );
 
     obstacle.row = newRow;
@@ -67,18 +79,17 @@ function updateObstacles() {
   });
 }
 
-// Function to check for collision with an obstacle
+
 function checkCollision() {
   obstacles.forEach((obstacle) => {
     if (playerRow === obstacle.row && playerCol === obstacle.col) {
-      // Collision occurred, handle it here (e.g., restart the game)
-      alert('You collided with an obstacle. Game over.');
+      alert('You collided with an obstacle. Restarting from round one.');
+      numObstacles = 0; // Reset the number of obstacles to zero
       resetGame();
     }
   });
 }
 
-// Function to draw the maze
 function drawMaze() {
   canvas.width = maze[0].length * cellSize;
   canvas.height = maze.length * cellSize;
@@ -89,7 +100,6 @@ function drawMaze() {
       context.fillStyle = maze[row][col] === 1 ? 'black' : 'white';
       context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
 
-      // Draw the win spot at the exit (green square)
       if (maze[row][col] === 2) {
         context.fillStyle = 'green';
         context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
@@ -97,7 +107,6 @@ function drawMaze() {
     }
   }
 
-  // Draw the player (red circle)
   context.beginPath();
   context.arc(
     playerCol * cellSize + cellSize / 2,
@@ -110,7 +119,6 @@ function drawMaze() {
   context.fill();
   context.closePath();
 
-  // Draw the obstacles (blue squares)
   obstacles.forEach((obstacle) => {
     context.fillStyle = 'blue';
     context.fillRect(
@@ -122,12 +130,11 @@ function drawMaze() {
   });
 }
 
-// Function to handle player movement
 function movePlayer(direction) {
   if (hasWon) {
-    // If the player has won, move them inside the green square
     playerRow = mazeSize - 2;
     playerCol = mazeSize - 1;
+    numObstacles++; // Add an additional obstacle when you win
   } else {
     const newRow =
       playerRow + (direction === 'down' ? 1 : direction === 'up' ? -1 : 0);
@@ -145,10 +152,10 @@ function movePlayer(direction) {
       playerCol = newCol;
 
       if (maze[newRow][newCol] === 2) {
-        // You reached the green square (winning spot)
         alert('You won! You reached the green square.');
         hasWon = true;
-        setTimeout(resetGame, 1000); // Automatically reset after 1 second
+        numObstacles++; // Add an additional obstacle when you win
+        setTimeout(resetGame, 1000);
       }
 
       checkCollision();
@@ -158,23 +165,16 @@ function movePlayer(direction) {
   drawMaze();
 }
 
-// Reset the game
 function resetGame() {
   playerRow = 1;
   playerCol = 0;
   hasWon = false;
-  // Reset obstacle positions
-  obstacles.forEach((obstacle) => {
-    do {
-      obstacle.row = Math.floor(Math.random() * (mazeSize - 2)) + 1;
-      obstacle.col = Math.floor(Math.random() * (mazeSize - 2)) + 1;
-    } while (maze[obstacle.row][obstacle.col] === 1);
-  });
-  maze = generateMaze(mazeSize);
+  obstacles.length = 0; // Clear the list of obstacles
+
+  maze = generateMaze(mazeSize, numObstacles);
   drawMaze();
 }
 
-// Event listener for arrow key presses
 document.addEventListener('keydown', function (event) {
   if (event.key === 'ArrowUp') {
     movePlayer('up');
@@ -187,14 +187,12 @@ document.addEventListener('keydown', function (event) {
   }
 });
 
-// Initialize the game
 drawMaze();
 
-// Game loop (update obstacle positions and check for collisions)
 setInterval(function () {
   if (!hasWon) {
     updateObstacles();
     checkCollision();
   }
   drawMaze();
-}, 1000); // Adjust the interval for obstacle movement
+}, 1000);
