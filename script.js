@@ -84,10 +84,12 @@ function checkCollision() {
     if (playerRow === obstacle.row && playerCol === obstacle.col) {
       alert('You collided with an obstacle. Restarting from round one.');
       numObstacles = 0; // Reset the number of obstacles to zero
+      completedMazes = -1; // Reset the completed mazes count to zero
       resetGame();
     }
   });
 }
+
 
 function drawMaze() {
   canvas.width = maze[0].length * cellSize;
